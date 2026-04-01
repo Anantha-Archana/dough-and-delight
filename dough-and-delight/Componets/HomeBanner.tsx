@@ -18,10 +18,10 @@ export const HomeBanner = () => {
           sizes="100vw"
           quality={100}
           className="
-                        object-cover
-                        object-[center_70%]
-                        md:object-right
-                    "
+              object-cover
+              object-[center_70%]
+              md:object-right
+          "
         />
       </div>
 
@@ -45,16 +45,16 @@ export const HomeBanner = () => {
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">
                 <button
                   className="
-                                            w-full sm:w-auto
-                                            rounded-full
-                                            bg-[#8b3e2f]
-                                            px-5 py-2.5
-                                            text-sm
-                                            md:px-6 md:py-3 md:text-base
-                                            text-white
-                                            font-medium
-                                            hover:bg-[#733225]
-                                        "
+                      w-full sm:w-auto
+                      rounded-full
+                      bg-[#8b3e2f]
+                      px-5 py-2.5
+                      text-sm
+                      md:px-6 md:py-3 md:text-base
+                      text-white
+                      font-medium
+                      hover:bg-[#733225]
+                  "
                 >
                   Order Now
                 </button>
@@ -62,17 +62,17 @@ export const HomeBanner = () => {
                 <Link href="/menu">
                   <button
                     className="
-                                                w-full sm:w-auto
-                                                rounded-full
-                                                border border-[#8b3e2f]
-                                                px-5 py-2.5
-                                                text-sm
-                                                md:px-6 md:py-3 md:text-base
-                                                text-[#8b3e2f]
-                                                hover:bg-[#8b3e2f]
-                                                hover:text-white
-                                                transition-all duration-300
-                                            "
+                        w-full sm:w-auto
+                        rounded-full
+                        border border-[#8b3e2f]
+                        px-5 py-2.5
+                        text-sm
+                        md:px-6 md:py-3 md:text-base
+                        text-[#8b3e2f]
+                        hover:bg-[#8b3e2f]
+                        hover:text-white
+                        transition-all duration-300
+                    "
                   >
                     View Menu
                   </button>

@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
 import Image from "next/image";
 
 const breadImg = "/bread-image.png";
@@ -29,19 +32,34 @@ const features = [
 ];
 
 export const AboutUsModal = () => {
+
+  // FIX: Proper AOS initialization
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      easing: "ease-in-out",
+      once: false,
+    });
+
+    AOS.refresh();
+  }, []);
+
   return (
     <section
       className="relative min-h-screen w-full overflow-hidden font-['Comic_Sans_MS',cursive]"
       data-aos="fade-in"
     >
+      {/* Background */}
       <div className="absolute inset-0 bg-[url('/background-image.png')] bg-cover bg-center" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#fdf4ee]/80 via-[#fdf4ee]/60 to-[#fdf4ee]/85" />
+
       <div className="relative z-10 px-4 py-20">
         <div
           className="max-w-6xl mx-auto rounded-3xl shadow-2xl px-6 md:px-14 py-16
-                            bg-gradient-to-b from-[#fffdfb] via-[#fff8f2] to-[#fde9dc]"
+          bg-gradient-to-b from-[#fffdfb] via-[#fff8f2] to-[#fde9dc]"
         >
-          <div className="text-center mb-16">
+          {/* Heading */}
+          <div className="text-center mb-16" data-aos="fade-up">
             <h1 className="text-3xl md:text-5xl font-bold text-[#5b2b1d] mb-3">
               About Dough & Delight
             </h1>
@@ -52,8 +70,11 @@ export const AboutUsModal = () => {
 
             <div className="w-24 h-[2px] bg-[#d8b7a3] mx-auto mt-6 rounded-full" />
           </div>
+
+          {/* Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
+            {/* Text */}
+            <div data-aos="fade-right">
               <h2 className="text-2xl font-semibold text-[#5b2b1d] mb-2">
                 Our Story
               </h2>
@@ -74,34 +95,30 @@ export const AboutUsModal = () => {
               </p>
             </div>
 
-            <div className="flex justify-center">
+            {/* Image */}
+            <div className="flex justify-center" data-aos="zoom-in">
               <Image
                 src={breadImg}
                 alt="Fresh bakery items"
                 width={460}
                 height={320}
-                data-aos="zoom-in"
                 className="rounded-2xl shadow-lg object-cover border-8 border-white"
+                unoptimized
               />
             </div>
           </div>
-          <div className="w-full h-[2px] bg-[#d8b7a3] rounded-full mt-8 mb-15" />
-          <div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-10"
-            data-aos="flip-down"
-          >
-            {features.map((feature) => (
+
+          {/* Divider */}
+          <div className="w-full h-[2px] bg-[#d8b7a3] rounded-full mt-8 mb-12" />
+
+          {/* Features */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+            {features.map((feature, index) => (
               <div
                 key={feature.id}
-                className="
-                                        flex flex-col items-center text-center
-                                        p-6 rounded-2xl
-                                        bg-[#fffaf6]
-                                        border border-[#f0dccc]
-                                        shadow-md
-                                        hover:shadow-lg
-                                        transition
-                                        "
+                className="flex flex-col items-center text-center p-6 rounded-2xl bg-[#fffaf6] border border-[#f0dccc] shadow-md hover:shadow-lg transition"
+                data-aos="flip-up"
+                data-aos-delay={index * 100}
               >
                 <Image
                   src={feature.icon}
@@ -109,16 +126,20 @@ export const AboutUsModal = () => {
                   width={100}
                   height={100}
                   className="mb-4"
+                  unoptimized
                 />
 
                 <h3 className="text-lg font-semibold text-[#5b2b1d] mb-2">
                   {feature.title}
                 </h3>
 
-                <p className="text-sm text-[#7a4a3b]">{feature.description}</p>
+                <p className="text-sm text-[#7a4a3b]">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
+
         </div>
       </div>
     </section>

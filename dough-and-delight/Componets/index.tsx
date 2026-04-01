@@ -10,12 +10,8 @@ export const options = [
     "No"
 ];
 
-
 export const priceVariants = [
     "0.5 kg",
     "1 kg",
     "2 kg"
 ];
-
-
-
