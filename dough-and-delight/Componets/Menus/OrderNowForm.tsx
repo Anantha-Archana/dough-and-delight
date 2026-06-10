@@ -1,66 +1,96 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
+import { Modal, Input, Button } from "antd";
+import { useCart } from "@/app/context/cardContext";
+import Image from "next/image";
 import {
-  Button,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  Row,
-  Col,
-  message,
-} from "antd";
-import dayjs from "dayjs";
+  CloseOutlined,
+  UserOutlined,
+  PhoneOutlined,
+} from "@ant-design/icons";
 
-interface OrderNowFormProps {
-  open: boolean;
-  onClose: () => void;
-  orderItem: any;
-}
+export const OrderNowForm = ({ open, onClose }: any) => {
+  const {
+    cart,
+    increaseQty,
+    decreaseQty,
+    removeItem,
+    clearCart,
+  } = useCart();
 
-export const OrderNowForm = ({
-  open,
-  onClose,
-  orderItem,
-}: OrderNowFormProps) => {
-  const [form] = Form.useForm();
+  const [step, setStep] = useState<"cart" | "checkout">("cart");
 
-  useEffect(() => {
-    if (orderItem) {
-      form.setFieldsValue({
-        itemName: orderItem.itemName,
-      });
+  const [form, setForm] = useState({
+    customerName: "",
+    phone: "",
+    address: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const subtotal = cart.reduce(
+    (sum: number, item: any) =>
+      sum + (Number(item.price) || 0) * (item.quantity || 0),
+    0
+  );
+
+  const delivery = 50;
+  const total = subtotal + delivery;
+
+  const placeOrder = async () => {
+    if (
+      !form.customerName ||
+      !form.phone ||
+      !form.address
+    ) {
+      alert("Please fill all fields");
+      return;
     }
-  }, [orderItem, form]);
-
-  const handleFinish = async (values: any) => {
-    const finalData = {
-      ...values,
-      orderDate: values.orderDate
-        ? values.orderDate.format("YYYY-MM-DD")
-        : null,
-      item: orderItem,
-    };
 
     try {
+      setLoading(true);
+
       const res = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          customerName: form.customerName,
+          phone: form.phone,
+          address: form.address,
+          cart,
+          total,
+        }),
       });
 
-      const result = await res.json();
+      const data = await res.json();
 
-      if (res.ok) {
-        message.success("Order placed successfully 🎉");
-        form.resetFields();
+      if (data.success) {
+        alert("✅ Order placed successfully");
+
+        clearCart();
+
+        setForm({
+          customerName: "",
+          phone: "",
+          address: "",
+        });
+
+        setStep("cart");
+
         onClose();
       } else {
-        message.error(result.error || "Failed to place order");
+        alert(data.error || "Order failed");
       }
-    } catch {
-      message.error("Server error");
+    } catch (error) {
+      console.error("ORDER ERROR:", error);
+
+      alert("❌ Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,294 +100,190 @@ export const OrderNowForm = ({
       onCancel={onClose}
       footer={null}
       centered
-      width={720}
-      closeIcon={<span className="text-lg text-[#8b5e4b]">✕</span>}
-      className="rounded-2xl overflow-hidden"
-      title={null}
+      width="100%"
+      style={{ maxWidth: 520 }}
     >
-      <div className="text-center border-b border-[#ead2c4] pb-4 pt-2 bg-[#fffaf7]">
-        <h2 className="text-2xl font-bold text-[#6f3e2f]">
-          🎂 Cake Order Form
-        </h2>
-        <p className="text-[#8b5e4b] text-sm mt-1">
-          Customize your perfect cake
-        </p>
-      </div>
+      <div className="bg-[#f7f3f0] rounded-3xl overflow-hidden">
 
-      <div className="max-h-[70vh] overflow-y-auto px-5 py-5 bg-gradient-to-br from-[#f6ebe4] via-[#f4e1d6] to-[#ead2c4]">
+        {/* HEADER */}
+        <div className="flex justify-between items-center px-4 py-3 bg-white shadow-sm">
+          <h2 className="text-lg md:text-xl font-semibold text-[#5b2b1d]">
+            {step === "cart" ? "Your Cart" : "Checkout"}
+          </h2>
 
-        <div className="bg-[#fffaf7] rounded-2xl p-5 shadow-sm border border-[#e6cfc2]">
+          <span className="bg-[#8b5e4b] text-white text-xs px-2 py-1 rounded-full">
+            {cart.length}
+          </span>
+        </div>
 
-          <Form form={form} layout="vertical" onFinish={handleFinish}>
+        <div className="p-4 md:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
 
-            <h3 className="text-[#6f3e2f] font-semibold mb-3">Cake Name</h3>
-            <Form.Item name="itemName">
-              <Input disabled className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-            </Form.Item>
+          {step === "cart" && (
+            <>
+              <p className="text-sm text-gray-500">
+                You have {cart.length} items
+              </p>
 
-            <div className="h-[1px] bg-[#ead2c4] my-5" />
-
-            <h3 className="text-[#6f3e2f] font-semibold mb-3">Customer Details</h3>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label="Customer Name"
-                  name="customerName"
-                  rules={[{ required: true, message: "Enter your name" }]}
+              {cart.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="relative flex items-center justify-between bg-white p-3 md:p-4 rounded-2xl shadow-sm"
                 >
-                  <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-                </Form.Item>
-              </Col>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                  >
+                    <CloseOutlined />
+                  </button>
 
-              <Col span={12}>
-                <Form.Item
-                  label="Phone Number"
-                  name="phone"
-                  rules={[
-                    { required: true, message: "Enter phone number" },
-                    { pattern: /^[0-9]{10}$/, message: "Enter valid number" },
-                  ]}
-                >
-                  <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-                </Form.Item>
-              </Col>
-            </Row>
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-12 h-12 md:w-16 md:h-16 relative">
+                      <Image
+                        src={
+                          item.image?.startsWith("/")
+                            ? item.image
+                            : `/${item.image}`
+                        }
+                        alt={item.itemName}
+                        fill
+                        className="object-contain rounded-xl"
+                      />
+                    </div>
 
-            <div className="h-[1px] bg-[#ead2c4] my-5" />
+                    <div>
+                      <p className="font-medium text-[#5b2b1d]">
+                        {item.itemName}
+                      </p>
 
-            <h3 className="text-[#6f3e2f] font-semibold mb-3">Order Details</h3>
+                      <p className="text-xs text-gray-400">
+                        {item.size}
+                      </p>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label="Order Date"
-                  name="orderDate"
-                  rules={[{ required: true, message: "Select date" }]}
-                >
-                  <DatePicker
-                    className="w-full bg-[#fff5ef] border border-[#e6cfc2] rounded-md"
-                    disabledDate={(current) =>
-                      current && current < dayjs().startOf("day")
+                      <p className="text-sm text-gray-500">
+                        ₹ {item.price}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-[#8b5e4b] text-white px-3 py-1 rounded-full">
+                    <button onClick={() => decreaseQty(item.id)}>
+                      -
+                    </button>
+
+                    <span>{item.quantity}</span>
+
+                    <button onClick={() => increaseQty(item.id)}>
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="bg-white p-4 rounded-2xl shadow-sm text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>₹ {subtotal}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Delivery</span>
+                  <span>₹ {delivery}</span>
+                </div>
+
+                <div className="flex justify-between font-semibold text-[#5b2b1d]">
+                  <span>Total</span>
+                  <span>₹ {total}</span>
+                </div>
+              </div>
+
+              <button
+                disabled={cart.length === 0}
+                onClick={() => setStep("checkout")}
+                className={`w-full py-3 rounded-full text-white font-medium ${
+                  cart.length === 0
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#8b5e4b] to-[#c08a5a]"
+                }`}
+              >
+                Proceed to Checkout
+              </button>
+            </>
+          )}
+
+          {step === "checkout" && (
+            <>
+              <div className="bg-white p-5 rounded-2xl shadow-sm space-y-4">
+
+                <div>
+                  <label className="text-sm text-gray-600 mb-1 block">
+                    Full Name
+                  </label>
+
+                  <Input
+                    prefix={<UserOutlined />}
+                    value={form.customerName}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        customerName: e.target.value,
+                      })
                     }
+                    placeholder="Enter your name"
+                    className="h-11 rounded-xl"
                   />
-                </Form.Item>
-              </Col>
+                </div>
 
-              <Col span={12}>
-                <Form.Item
-                  label="Cake Size"
-                  name="size"
-                  rules={[{ required: true, message: "Enter size" }]}
-                >
-                  <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-                </Form.Item>
-              </Col>
-            </Row>
+                <div>
+                  <label className="text-sm text-gray-600 mb-1 block">
+                    Address
+                  </label>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  label="Flavour"
-                  name="flavour"
-                  rules={[{ required: true, message: "Enter flavour" }]}
-                >
-                  <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-                </Form.Item>
-              </Col>
+                  <Input.TextArea
+                    rows={3}
+                    value={form.address}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        address: e.target.value,
+                      })
+                    }
+                    placeholder="Enter delivery address"
+                    className="rounded-xl"
+                  />
+                </div>
 
-              <Col span={12}>
-                <Form.Item label="Colour Theme" name="colour">
-                  <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-                </Form.Item>
-              </Col>
-            </Row>
+                <div>
+                  <label className="text-sm text-gray-600 mb-1 block">
+                    Phone Number
+                  </label>
 
-            <div className="h-[1px] bg-[#ead2c4] my-5" />
-
-            <h3 className="text-[#6f3e2f] font-semibold mb-3">Delivery Details</h3>
-
-            <Form.Item
-              label="Delivery Address"
-              name="address"
-              rules={[{ required: true, message: "Enter address" }]}
-            >
-              <Input.TextArea rows={2} className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md" />
-            </Form.Item>
-
-            <Form.Item
-              label="Message on Cake"
-              name="message"
-              rules={[{ required: true, message: "Enter message" }]}
-            >
-              <Input className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md py-2" />
-            </Form.Item>
-
-            <Form.Item label="Special Instructions" name="instructions">
-              <Input.TextArea rows={2} className="bg-[#fff5ef] border border-[#e6cfc2] rounded-md" />
-            </Form.Item>
-
-            <div className="flex gap-4 mt-5">
-              <Button
-                onClick={onClose}
-                className="w-full h-10 rounded-md border border-[#d2b4a6] text-[#6f3e2f] bg-[#f3e2d8]"
-              >
-                Cancel
-              </Button>
+                  <Input
+                    prefix={<PhoneOutlined />}
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        phone: e.target.value,
+                      })
+                    }
+                    placeholder="Enter phone number"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+              </div>
 
               <Button
-                htmlType="submit"
-                className="w-full h-10 rounded-md bg-[#6f3e2f] text-white font-semibold hover:bg-[#5a2e1f]"
+                loading={loading}
+                onClick={placeOrder}
+                type="primary"
+                className="w-full h-11 rounded-full bg-gradient-to-r from-[#8b5e4b] to-[#c08a5a]"
               >
-                Place Order 🍰
+                Place Order
               </Button>
-            </div>
-
-          </Form>
-
+            </>
+          )}
         </div>
       </div>
     </Modal>
   );
 };
-
-
-// "use client";
-
-// import { Button, DatePicker, Form, Input, Modal, Row, Col } from "antd";
-
-// interface OrderNowFormProps {
-//   open: boolean;
-//   onClose: () => void;
-//   orderItem: any;
-//   onSubmit: (values: any) => void;
-// }
-
-// export const OrderNowForm = ({
-//   open,
-//   onClose,
-//   orderItem,
-//   onSubmit,
-// }: OrderNowFormProps) => {
-//   const [form] = Form.useForm();
-
-//   const handleFinish = (values: any) => {
-//     const finalData = {
-//       ...values,
-//       item: orderItem,
-//     };
-
-//     onSubmit(finalData);
-//     form.resetFields();
-//     onClose();
-//   };
-
-//   return (
-//     <Modal
-//         open={open}
-//         onCancel={onClose}
-//         footer={null}
-//         centered
-//         width={700}
-//         styles={{
-//         body: {
-//             maxHeight: "70vh",
-//             overflowY: "auto",
-//             padding: "20px",
-//         },
-//     }}
-//       title={
-//         <h2 className="text-xl font-bold text-center">
-//           Cake Order Form
-//         </h2>
-//       }
-//     >
-//       <Form form={form} layout="vertical" onFinish={handleFinish}>
-
-//         <Form.Item label="Cake Name">
-//           <Input value={orderItem?.itemName} disabled />
-//         </Form.Item>
-
-//         <Row gutter={16}>
-//             <Col span={12}>
-//                 <Form.Item
-//                     label="Customer Name"
-//                     name="customerName"
-//                     rules={[{ required: true, message: "Enter name" }]}
-//                 >
-//                     <Input placeholder="Enter your name" />
-//                 </Form.Item>
-//             </Col>
-
-//             <Col span={12}>
-//                 <Form.Item
-//                     label="Phone Number"
-//                     name="phone"
-//                     rules={[{ required: true, message: "Enter phone number" }]}
-//                 >
-//                     <Input placeholder="Enter phone number" />
-//                 </Form.Item>
-//             </Col>
-//         </Row>
-
-//         <Row gutter={16}>
-//           <Col span={12}>
-//             <Form.Item
-//               label="Order Date"
-//               name="orderDate"
-//               rules={[{ required: true, message: "Select date" }]}
-//             >
-//               <DatePicker className="w-full" />
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={12}>
-//             <Form.Item label="Cake Size" name="size" rules={[{ required: true, message: "Enter cake size" }]}>
-//               <Input placeholder="1kg / 2kg / 500g..." />
-//             </Form.Item>
-//           </Col>
-//         </Row>
-
-//         <Row gutter={16}>
-//           <Col span={12}>
-//             <Form.Item label="Flavour" name="flavour" rules={[{ required: true, message: "Enter flavour" }]}>
-//               <Input placeholder="Chocolate / Vanilla..." />
-//             </Form.Item>
-//           </Col>
-
-//           <Col span={12}>
-//             <Form.Item label="Colour Theme" name="colour">
-//               <Input placeholder="Pink & White" />
-//             </Form.Item>
-//           </Col>
-//         </Row>
-
-//         <Form.Item label="Address" name="address" rules={[{ required: true, message: "Enter delivery address" }]}>
-//           <Input.TextArea rows={2} placeholder="Enter address" />
-//         </Form.Item>
-
-//         <Form.Item label="Message on Cake" name="message" rules={[{ required: true, message: "Enter message for the cake" }]}>
-//           <Input placeholder="Happy Birthday..." />
-//         </Form.Item>
-
-//         <Form.Item label="Special Instructions" name="instructions">
-//           <Input.TextArea rows={3} placeholder="Eggless, less sugar..." />
-//         </Form.Item>
-
-//         <div className="flex gap-3 mt-4">
-//           <Button onClick={onClose} className="w-full">
-//             Cancel
-//           </Button>
-
-//           <Button
-//             type="primary"
-//             htmlType="submit"
-//             className="w-full bg-amber-900"
-//           >
-//             Submit Order
-//           </Button>
-//         </div>
-
-//       </Form>
-//     </Modal>
-//   );
-// };

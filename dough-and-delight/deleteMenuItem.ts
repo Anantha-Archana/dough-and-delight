@@ -12,7 +12,7 @@ const run = async () => {
   `);
   console.log("Tables:", tables);
 
-  await db.run(`DELETE FROM menu WHERE id IN (6)`);
+  await db.run(`DELETE FROM menu WHERE id IN (30)`);
 
   console.log("Deleted successfully");
 

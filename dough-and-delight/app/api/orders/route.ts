@@ -1,117 +1,119 @@
 import { NextResponse } from "next/server";
 import { openDB } from "@/lib/db";
-import { sendOrderNotifications } from "@/lib/sms";
 
-interface OrderRequest {
-  item: {
-    itemName: string;
-  };
-  customerName: string;
-  phone: string;
-  orderDate: string;
-  address?: string;
-  size?: string;
-  flavour?: string;
-  colour?: string;
-  message?: string;
-  instructions?: string;
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: "Orders API working",
+  });
 }
 
 export async function POST(req: Request) {
   try {
-    const body: OrderRequest = await req.json();
+    const body = await req.json();
+
+    const { customerName, phone, address, cart, total } = body;
+
+    if (!customerName || !phone || !address) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Please fill all fields",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!cart || cart.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cart is empty",
+        },
+        { status: 400 }
+      );
+    }
 
     const db = await openDB();
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        itemName TEXT,
         customerName TEXT,
         phone TEXT,
-        orderDate TEXT,
         address TEXT,
-        size TEXT,
-        flavour TEXT,
-        colour TEXT,
-        message TEXT,
-        instructions TEXT
+        total INTEGER,
+        createdAt TEXT
       )
     `);
 
-    const {
-      item,
-      customerName,
-      phone,
-      orderDate,
-      address = "",
-      size = "",
-      flavour = "",
-      colour = "",
-      message = "",
-      instructions = "",
-    } = body;
-
-    if (!item?.itemName) {
-      return NextResponse.json({ error: "Item name required" }, { status: 400 });
-    }
-
-    if (!customerName?.trim()) {
-      return NextResponse.json({ error: "Customer name required" }, { status: 400 });
-    }
-
-    if (!phone?.trim()) {
-      return NextResponse.json({ error: "Phone number required" }, { status: 400 });
-    }
-
-    if (!orderDate) {
-      return NextResponse.json({ error: "Order date required" }, { status: 400 });
-    }
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orderId INTEGER,
+        itemName TEXT,
+        price INTEGER,
+        quantity INTEGER,
+        size TEXT
+      )
+    `);
 
     const result = await db.run(
-      `INSERT INTO orders 
-      (itemName, customerName, phone, orderDate, address, size, flavour, colour, message, instructions) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        item.itemName,
+      `
+      INSERT INTO orders (
         customerName,
         phone,
-        orderDate,
         address,
-        size,
-        flavour,
-        colour,
-        message,
-        instructions,
+        total,
+        createdAt
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        customerName,
+        phone,
+        address,
+        total,
+        new Date().toISOString(),
       ]
     );
 
-    console.log("Order saved. Sending SMS...");
+    const orderId = result.lastID;
 
-    await sendOrderNotifications({
-      customerName,
-      phone,
-      itemName: item.itemName,
-      orderDate,
+    for (const item of cart) {
+      await db.run(
+        `
+        INSERT INTO order_items (
+          orderId,
+          itemName,
+          price,
+          quantity,
+          size
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          orderId,
+          item.itemName,
+          item.price,
+          item.quantity,
+          item.size || "",
+        ]
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Order placed successfully",
+      orderId,
     });
-
-    console.log("SMS sent successfully");
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Order placed successfully",
-        orderId: result.lastID,
-      },
-      { status: 201 }
-    );
   } catch (error: any) {
-    console.error("ORDER API ERROR:", error);
+    console.log("ORDER API ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Internal Server Error",
+        error: error.message,
       },
       { status: 500 }
     );

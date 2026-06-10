@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AOS from "aos";
-import "aos/dist/aos.css";
 import Image from "next/image";
 
 const contactBackgroundImage = "/contact-background-img.png";
 
 export const ContactModal = () => {
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     AOS.init({
@@ -19,9 +27,71 @@ export const ContactModal = () => {
     AOS.refresh();
   }, []);
 
+  const handleChange = (e: any) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.email || !formData.phone || !formData.message) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(formData.name)) {
+      alert("Please enter a valid name (only letters and spaces are allowed).");
+      return;
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      alert("Please enter a valid 10-digit Indian phone number.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      if (data.success) {
+        alert("Message sent successfully ✅");
+
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          message: "",
+        });
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Something went wrong ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full overflow-hidden cursor-pointer"
       data-aos="fade-in"
     >
       <div className="absolute inset-0">
@@ -96,9 +166,13 @@ export const ContactModal = () => {
               bg-gradient-to-b from-[#fffaf6] to-[#fdeee2] shadow-md"
               data-aos="fade-left"
             >
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
+
                 <input
                   type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Your Name"
                   className="w-full px-4 py-3 rounded-xl border border-[#e6cbb8]
                   focus:outline-none focus:ring-2 focus:ring-[#d8b7a3]"
@@ -106,12 +180,29 @@ export const ContactModal = () => {
 
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="Your Email"
                   className="w-full px-4 py-3 rounded-xl border border-[#e6cbb8]
                   focus:outline-none focus:ring-2 focus:ring-[#d8b7a3]"
                 />
 
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Your Phone Number"
+                  className="w-full px-4 py-3 rounded-xl border border-[#e6cbb8]
+                  focus:outline-none focus:ring-2 focus:ring-[#d8b7a3]"
+                  maxLength={10}
+                />
+
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   placeholder="Your Message"
                   rows={4}
                   className="w-full px-4 py-3 rounded-xl border border-[#e6cbb8]
@@ -120,11 +211,13 @@ export const ContactModal = () => {
 
                 <button
                   type="submit"
+                  disabled={loading}
                   className="w-full mt-2 bg-[#7a4a3b] text-white py-3 rounded-xl
-                  font-semibold hover:bg-[#5b2b1d] transition"
+                  font-semibold hover:bg-[#5b2b1d] transition cursor-pointer"
                 >
-                  Send Message
+                  {loading ? "Sending..." : "Send Message"}
                 </button>
+
               </form>
             </div>
 

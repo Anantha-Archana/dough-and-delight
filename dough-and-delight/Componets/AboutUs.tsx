@@ -7,8 +7,8 @@ const aboutImg = "/about-background-img.png";
 
 export const AboutUs = () => {
     return (
-        <section className="w-full bg-[#fff6ee] overflow-hidden rounded-[10px] font-['Comic_Sans_MS',cursive]" data-aos="fade-down-left">
-            <div className="grid grid-cols-1 md:grid-cols-2 items-center">
+        <section className="w-full bg-[#fff6ee] overflow-hidden rounded-[10px] font-['Comic_Sans_MS',cursive]" data-aos="fade-down-left cursor-pointer">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center cursor-pointer">
                 <div className="order-1 md:order-2 container mx-auto px-6 py-16" data-aos="flip=left">
                     <div className="max-w-xl mx-auto md:mx-0 text-center md:text-left">
                         <h2 className="text-3xl md:text-4xl font-bold text-[#5b2b1d] mb-4 font-['Playfair_Display',serif]">

@@ -43,7 +43,7 @@ export const AdminLoginModal = ({ open, onClose, onSuccess }: Props) => {
       message.error("Something went wrong. Please try again.");
     }
   };
-  
+
   return (
     <Modal
       open={open}

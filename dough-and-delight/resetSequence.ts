@@ -1,17 +1,25 @@
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
-const run = async () => {
-    const db = await open({
-        filename: "./database.sqlite",
-        driver: sqlite3.Database,
-    });
+async function resetSequence() {
+  const db = await open({
+    filename: "./database.sqlite",
+    driver: sqlite3.Database,
+  });
 
-    await db.run("DELETE FROM sqlite_sequence WHERE name='menu'");
+  try {
+    //  Delete all orders
+    await db.run("DELETE FROM orders");
 
-    console.log("Sequence reset done");
+    //  Reset auto increment
+    await db.run("DELETE FROM sqlite_sequence WHERE name='orders'");
 
+    console.log("Orders table reset successfully");
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
     await db.close();
-};
+  }
+}
 
-run();
+resetSequence();

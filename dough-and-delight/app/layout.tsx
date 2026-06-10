@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/Componets/Header";
 import Footer from "@/Componets/Footer";
 import "aos/dist/aos.css";
+import { CartProvider } from "./context/cardContext";
 
 export const metadata: Metadata = {
   title: "Dough & Delight",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        {children}
-        <Footer />
+        <CartProvider>
+          <Header />
+          {children}
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import AOS from "aos";
-import "aos/dist/aos.css";
+// import "aos/dist/aos.css";
 import { HomeBanner } from "@/Componets/HomeBanner";
 import { WhyChooseDoughDelight } from "@/Componets/WhyChooseDoughDelight";
 import { AboutUs } from "@/Componets/AboutUs";
