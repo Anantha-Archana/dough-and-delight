@@ -17,6 +17,7 @@ const SeasonalCard = ({
     <div
       className="
         group
+        animate-fadeIn
         bg-white
         rounded-3xl
         overflow-hidden

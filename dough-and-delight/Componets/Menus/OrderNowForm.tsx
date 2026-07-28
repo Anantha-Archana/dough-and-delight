@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Modal, Input, Button } from "antd";
+import { useEffect, useState } from "react";
+import { Modal, Input, Button, message } from "antd";
 import { useCart } from "@/app/context/cardContext";
 import Image from "next/image";
 import {
@@ -38,13 +38,54 @@ export const OrderNowForm = ({ open, onClose }: any) => {
   const delivery = 50;
   const total = subtotal + delivery;
 
+  useEffect(() => {
+    if (!open) {
+      setForm({
+        customerName: "",
+        phone: "",
+        address: "",
+      });
+      setStep("cart");
+    }
+  }, [open]);
+
+  const handleClose = () => {
+    setForm({
+      customerName: "",
+      phone: "",
+      address: "",
+    });
+    setStep("cart");
+    onClose();
+  };
+
   const placeOrder = async () => {
-    if (
-      !form.customerName ||
-      !form.phone ||
-      !form.address
-    ) {
-      alert("Please fill all fields");
+    const customerName = form.customerName.trim();
+    const phone = form.phone.trim();
+    const address = form.address.trim();
+
+    if (!customerName || !phone || !address) {
+      message.error("Please fill all fields");
+      return;
+    }
+
+    if (customerName.length < 2) {
+      message.error("Name must be at least 2 characters");
+      return;
+    }
+
+    if (!/^\d{10,15}$/.test(phone)) {
+      message.error("Please enter a valid phone number");
+      return;
+    }
+
+    if (address.length < 5) {
+      message.error("Address must be at least 5 characters");
+      return;
+    }
+
+    if (cart.length === 0) {
+      message.error("Your cart is empty");
       return;
     }
 
@@ -56,39 +97,43 @@ export const OrderNowForm = ({ open, onClose }: any) => {
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
-          customerName: form.customerName,
-          phone: form.phone,
-          address: form.address,
+          customerName,
+          phone,
+          address,
           cart,
           total,
         }),
       });
 
-      const data = await res.json();
+      let data;
 
-      if (data.success) {
-        alert("✅ Order placed successfully");
-
-        clearCart();
-
-        setForm({
-          customerName: "",
-          phone: "",
-          address: "",
-        });
-
-        setStep("cart");
-
-        onClose();
-      } else {
-        alert(data.error || "Order failed");
+      try {
+        data = await res.json();
+      } catch {
+        data = { success: false, error: "Invalid server response" };
       }
+
+      if (!res.ok || !data.success) {
+        message.error(data.error || "Order failed");
+        return;
+      }
+
+      message.success("✅ Order placed successfully");
+
+      clearCart();
+
+      setForm({
+        customerName: "",
+        phone: "",
+        address: "",
+      });
+
+      setStep("cart");
+      onClose();
     } catch (error) {
       console.error("ORDER ERROR:", error);
-
-      alert("❌ Something went wrong");
+      message.error("❌ Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -97,10 +142,11 @@ export const OrderNowForm = ({ open, onClose }: any) => {
   return (
     <Modal
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       footer={null}
       centered
       width="100%"
+      destroyOnClose
       style={{ maxWidth: 520 }}
     >
       <div className="bg-[#f7f3f0] rounded-3xl overflow-hidden">

@@ -1,6 +1,29 @@
 import { NextResponse } from "next/server";
 import { openDB } from "@/lib/db";
 
+async function ensureTableColumns(
+  db: any,
+  tableName: string,
+  columns: Array<{ name: string; definition: string }>
+) {
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      ${columns.map((column) => `${column.name} ${column.definition}`).join(", ")}
+    )
+  `);
+
+  const tableInfo = await db.all(`PRAGMA table_info(${tableName})`);
+  const existingColumns = new Set(tableInfo.map((column: any) => column.name));
+
+  for (const column of columns) {
+    if (!existingColumns.has(column.name)) {
+      await db.exec(
+        `ALTER TABLE ${tableName} ADD COLUMN ${column.name} ${column.definition}`
+      );
+    }
+  }
+}
+
 export async function GET() {
   return NextResponse.json({
     success: true,
@@ -13,8 +36,11 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const { customerName, phone, address, cart, total } = body;
+    const cleanName = typeof customerName === "string" ? customerName.trim() : "";
+    const cleanPhone = typeof phone === "string" ? phone.trim() : "";
+    const cleanAddress = typeof address === "string" ? address.trim() : "";
 
-    if (!customerName || !phone || !address) {
+    if (!cleanName || !cleanPhone || !cleanAddress) {
       return NextResponse.json(
         {
           success: false,
@@ -24,7 +50,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!cart || cart.length === 0) {
+    if (!Array.isArray(cart) || cart.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -36,77 +62,65 @@ export async function POST(req: Request) {
 
     const db = await openDB();
 
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customerName TEXT,
-        phone TEXT,
-        address TEXT,
-        total INTEGER,
-        createdAt TEXT
-      )
-    `);
+    try {
+      await ensureTableColumns(db, "orders", [
+        { name: "id", definition: "INTEGER PRIMARY KEY AUTOINCREMENT" },
+        { name: "customerName", definition: "TEXT" },
+        { name: "phone", definition: "TEXT" },
+        { name: "address", definition: "TEXT" },
+        { name: "total", definition: "INTEGER" },
+        { name: "createdAt", definition: "TEXT" },
+      ]);
 
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS order_items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        orderId INTEGER,
-        itemName TEXT,
-        price INTEGER,
-        quantity INTEGER,
-        size TEXT
-      )
-    `);
+      await ensureTableColumns(db, "order_items", [
+        { name: "id", definition: "INTEGER PRIMARY KEY AUTOINCREMENT" },
+        { name: "orderId", definition: "INTEGER" },
+        { name: "itemName", definition: "TEXT" },
+        { name: "price", definition: "INTEGER" },
+        { name: "quantity", definition: "INTEGER" },
+        { name: "size", definition: "TEXT" },
+      ]);
 
-    const result = await db.run(
-      `
-      INSERT INTO orders (
-        customerName,
-        phone,
-        address,
-        total,
-        createdAt
-      )
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      [
-        customerName,
-        phone,
-        address,
-        total,
-        new Date().toISOString(),
-      ]
-    );
-
-    const orderId = result.lastID;
-
-    for (const item of cart) {
-      await db.run(
+      const result = await db.run(
         `
-        INSERT INTO order_items (
-          orderId,
-          itemName,
-          price,
-          quantity,
-          size
+        INSERT INTO orders (
+          customerName,
+          phone,
+          address,
+          total,
+          createdAt
         )
         VALUES (?, ?, ?, ?, ?)
         `,
-        [
-          orderId,
-          item.itemName,
-          item.price,
-          item.quantity,
-          item.size || "",
-        ]
+        [cleanName, cleanPhone, cleanAddress, total, new Date().toISOString()]
       );
-    }
 
-    return NextResponse.json({
-      success: true,
-      message: "Order placed successfully",
-      orderId,
-    });
+      const orderId = result.lastID;
+
+      for (const item of cart) {
+        await db.run(
+          `
+          INSERT INTO order_items (
+            orderId,
+            itemName,
+            price,
+            quantity,
+            size
+          )
+          VALUES (?, ?, ?, ?, ?)
+          `,
+          [orderId, item.itemName, item.price, item.quantity, item.size || ""]
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Order placed successfully",
+        orderId,
+      });
+    } finally {
+      await db.close();
+    }
   } catch (error: any) {
     console.log("ORDER API ERROR:", error);
 

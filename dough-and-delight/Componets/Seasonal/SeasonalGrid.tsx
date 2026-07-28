@@ -57,88 +57,64 @@ const items = [
 
 const SeasonalGrid = () => {
   return (
-    <section className="w-full py-12 px-4 bg-[#f8f1e7] overflow-hidden">
+    <section className="relative w-full overflow-hidden bg-[#f8f1e7] py-16 px-4 md:px-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_transparent_65%)]" />
+      <div className="relative mx-auto max-w-7xl">
+        <div className="rounded-[32px] border border-[#e7d8ce] bg-white/95 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.06)]">
+          <div className="text-center mb-8">
+            <p className="inline-flex items-center justify-center rounded-full bg-[#8b2e1f]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#8b2e1f]">
+              Seasonal favorites
+            </p>
+            <h2 className="mt-4 text-3xl md:text-4xl font-bold text-[#8b2e1e]">
+              Limited-time treats for the holidays
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-[#6b4a3b] leading-relaxed">
+              Enjoy our festive menu with hand-picked favorites and seasonal specials crafted just for you.
+            </p>
+          </div>
 
-      <div className="max-w-7xl mx-auto relative">
+          <div className="relative">
+            <button className="seasonal-prev absolute left-0 top-1/2 z-20 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#8b2e1e] shadow-lg shadow-[#8b2e1e]/10 transition duration-300 hover:bg-[#f3e4d3] sm:-left-3">
+              <ChevronLeft size={18} />
+            </button>
 
-        <div className="text-center mb-10">
+            <button className="seasonal-next absolute right-0 top-1/2 z-20 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#8b2e1e] shadow-lg shadow-[#8b2e1e]/10 transition duration-300 hover:bg-[#f3e4d3] sm:-right-3">
+              <ChevronRight size={18} />
+            </button>
 
-          <h2 className="text-3xl md:text-4xl font-bold text-[#8B2E1E]">
-            Seasonal Favorites
-          </h2>
-
-          <p className="text-[#6b4a3b] mt-3 text-sm md:text-base">
-            Enjoy our festive treats available for a limited time
-          </p>
-
+            <Swiper
+              modules={[Autoplay, Pagination, Navigation]}
+              spaceBetween={24}
+              loop={true}
+              autoplay={{
+                delay: 3200,
+                disableOnInteraction: false,
+              }}
+              pagination={{ clickable: true }}
+              navigation={{
+                prevEl: ".seasonal-prev",
+                nextEl: ".seasonal-next",
+              }}
+              breakpoints={{
+                320: { slidesPerView: 1 },
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+              }}
+              className="pb-14"
+            >
+              {items.map((item, index) => (
+                <SwiperSlide key={index}>
+                  <SeasonalCard
+                    image={item.image}
+                    title={item.title}
+                    price={item.price}
+                    badge={item.badge}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
         </div>
-
-        <button className="seasonal-prev absolute left-0 md:-left-3 top-[65%] z-10 -translate-y-1/2 bg-white/90 shadow-md p-2 rounded-full hover:bg-[#f3e4d3] transition duration-300">
-
-          <ChevronLeft
-            size={16}
-            className="text-[#8B2E1E]"
-          />
-
-        </button>
-
-        <button className="seasonal-next absolute right-0 md:-right-3 top-[65%] z-10 -translate-y-1/2 bg-white/90 shadow-md p-2 rounded-full hover:bg-[#f3e4d3] transition duration-300">
-
-          <ChevronRight
-            size={16}
-            className="text-[#8B2E1E]"
-          />
-
-        </button>
-
-        <Swiper
-          modules={[
-            Autoplay,
-            Pagination,
-            Navigation,
-          ]}
-          spaceBetween={25}
-          loop={true}
-          autoplay={{
-            delay: 2500,
-            disableOnInteraction: false,
-          }}
-          pagination={{
-            clickable: true,
-          }}
-          navigation={{
-            prevEl: ".seasonal-prev",
-            nextEl: ".seasonal-next",
-          }}
-          breakpoints={{
-            320: {
-              slidesPerView: 1,
-            },
-
-            640: {
-              slidesPerView: 2,
-            },
-
-            1024: {
-              slidesPerView: 3,
-            },
-          }}
-          className="pb-14"
-        >
-          {items.map((item, index) => (
-            <SwiperSlide key={index}>
-
-              <SeasonalCard
-                image={item.image}
-                title={item.title}
-                price={item.price}
-                badge={item.badge}
-              />
-
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
       </div>
     </section>
   );

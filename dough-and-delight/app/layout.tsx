@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/Componets/Header";
 import Footer from "@/Componets/Footer";
-import "aos/dist/aos.css";
+// import "aos/dist/aos.css";
 import { CartProvider } from "./context/cardContext";
 
 export const metadata: Metadata = {
@@ -18,6 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <CartProvider>
+          <Header />
+          {children}
+          <Footer />
+        </CartProvider>
         <CartProvider>
           <Header />
           {children}

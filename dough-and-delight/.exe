@@ -1,5 +1,5 @@
 // Delete Cmd: npx ts-node deleteMenuItem.ts  (or)  node --loader ts-node/esm deleteMenuItem.ts
-                (or)
+                // (or)
 // Delete Cmd: node --loader ts-node/esm deleteMenuItem.ts
 
 // Reset Cmd: node resetSequence.ts

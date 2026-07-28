@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import AOS from "aos";
-import "aos/dist/aos.css";
+// import "aos/dist/aos.css";
 import Image from "next/image";
 
 const logo = "/dough-and-doughts.png";
@@ -38,6 +38,7 @@ export const MenuBanner = () => {
         </div>
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-5">
+          
           
           <div data-aos="zoom-in" data-aos-delay="200">
             <Image

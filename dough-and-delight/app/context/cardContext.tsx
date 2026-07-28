@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
+interface CartItem {
 interface CartItem {
   id: number;
   itemName: string;
@@ -85,8 +87,8 @@ export const CartProvider = ({
   };
 
   const decreaseQty = (id: number) => {
-    setCart((prev) =>
-      prev
+    setCart((prev) => {
+      const nextCart = prev
         .map((item) =>
           item.id === id
             ? {
@@ -95,14 +97,28 @@ export const CartProvider = ({
               }
             : item
         )
-        .filter((item) => item.quantity > 0)
-    );
+        .filter((item) => item.quantity > 0);
+
+      if (nextCart.length === 0) {
+        setSelectedItem(null);
+        setCartOpen(false);
+      }
+
+      return nextCart;
+    });
   };
 
   const removeItem = (id: number) => {
-    setCart((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
+    setCart((prev) => {
+      const nextCart = prev.filter((item) => item.id !== id);
+
+      if (nextCart.length === 0) {
+        setSelectedItem(null);
+        setCartOpen(false);
+      }
+
+      return nextCart;
+    });
   };
 
   const clearCart = () => {
